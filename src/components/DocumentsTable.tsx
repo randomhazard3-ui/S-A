@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FileText, Search } from "lucide-react";
 import type { PortalDocument } from "@/lib/types";
 import { EmptyState } from "@/components/EmptyState";
+import { ExportButton } from "@/components/ExportButton";
 
 const STATUS_TONE: Record<PortalDocument["status"], string> = {
   current: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -67,6 +68,20 @@ export function DocumentsTable({
             </option>
           ))}
         </select>
+        <ExportButton
+          filename="documents.csv"
+          rows={filtered.map((d) => ({
+            title: d.title,
+            property: propertyNameById[d.propertyId] ?? "",
+            category: d.category,
+            version: d.version,
+            revisionDate: d.revisionDate,
+            reviewDate: d.reviewDate ?? "",
+            visibility: d.visibility,
+            status: d.status,
+            fileType: d.fileType,
+          }))}
+        />
       </div>
 
       {filtered.length === 0 ? (

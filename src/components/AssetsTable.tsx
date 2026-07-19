@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, Boxes } from "lucide-react";
 import type { Asset } from "@/lib/types";
 import { EmptyState } from "@/components/EmptyState";
+import { ExportButton } from "@/components/ExportButton";
 
 const CRITICALITY_LABEL: Record<Asset["criticality"], string> = {
   low: "Low",
@@ -76,6 +77,21 @@ export function AssetsTable({
             </option>
           ))}
         </select>
+        <ExportButton
+          filename="assets.csv"
+          rows={filtered.map((a) => ({
+            tagCode: a.tagCode,
+            assetType: a.assetType,
+            property: propertyNameById[a.propertyId] ?? "",
+            location: a.locationLabel,
+            system: a.system,
+            criticality: a.criticality,
+            condition: a.condition,
+            status: a.status,
+            nextServiceDue: a.nextServiceDue ?? "",
+            maintenanceContractor: a.maintenanceContractor ?? "",
+          }))}
+        />
       </div>
 
       {filtered.length === 0 ? (

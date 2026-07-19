@@ -4,12 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { NAV_ITEMS } from "@/components/Sidebar";
+import { navItemsForRole } from "@/components/Sidebar";
+import { useViewRole } from "@/lib/role-context";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const [lastPathname, setLastPathname] = useState(pathname);
+  const { role } = useViewRole();
+  const items = navItemsForRole(role);
 
   if (pathname !== lastPathname) {
     setLastPathname(pathname);
@@ -63,7 +66,7 @@ export function MobileNav() {
               </button>
             </div>
             <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-              {NAV_ITEMS.map((item) => {
+              {items.map((item) => {
                 const active =
                   pathname === item.href || pathname.startsWith(`${item.href}/`);
                 const Icon = item.icon;

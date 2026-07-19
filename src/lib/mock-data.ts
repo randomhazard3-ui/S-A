@@ -1,11 +1,17 @@
 import type {
+  Alarm,
   AuditEvent,
   Asset,
+  ContractorCompany,
   Location,
+  NotificationItem,
+  NotificationPreference,
   Organisation,
   PPMTask,
   PortalDocument,
   Property,
+  Quotation,
+  TelemetryPoint,
   User,
   WorkOrder,
 } from "./types";
@@ -43,6 +49,13 @@ export const properties: Property[] = [
     lastActivity: "Today",
     responsibleManager: "Amara Osei",
     region: "Central London",
+    scan: {
+      provider: "Polycam",
+      capturedAt: "2026-02-11",
+      status: "current",
+      coordinateSystem: "Local (scan-relative)",
+      sourceFiles: "GLB + point cloud archive",
+    },
   },
   {
     id: "prop_camden-retail",
@@ -97,6 +110,13 @@ export const properties: Property[] = [
     lastActivity: "Today",
     responsibleManager: "Amara Osei",
     region: "Central London",
+    scan: {
+      provider: "Matterport",
+      capturedAt: "2025-10-03",
+      status: "current",
+      coordinateSystem: "Matterport SDK (converted on import)",
+      sourceFiles: "Matterport model + panoramic walkthrough",
+    },
   },
   {
     id: "prop_shoreditch-office",
@@ -282,6 +302,7 @@ export const assets: Asset[] = [
     nextServiceDue: "2026-11-02",
     maintenanceContractor: "Metro Plumbing Services",
     status: "faulty",
+    anchor: { x: 28, y: 62 },
   },
   {
     id: "asset_ahu-02",
@@ -301,6 +322,7 @@ export const assets: Asset[] = [
     nextServiceDue: "2026-09-18",
     maintenanceContractor: "Climate Care Ltd",
     status: "in-service",
+    anchor: { x: 72, y: 30 },
   },
   {
     id: "asset_fd-11",
@@ -316,6 +338,7 @@ export const assets: Asset[] = [
     nextServiceDue: "2026-08-05",
     maintenanceContractor: "Sentinel Fire & Security",
     status: "in-service",
+    anchor: { x: 50, y: 85 },
   },
   {
     id: "asset_ahu-07",
@@ -335,6 +358,7 @@ export const assets: Asset[] = [
     nextServiceDue: "2026-07-25",
     maintenanceContractor: "Climate Care Ltd",
     status: "faulty",
+    anchor: { x: 35, y: 20 },
   },
   {
     id: "asset_el-22",
@@ -350,6 +374,7 @@ export const assets: Asset[] = [
     nextServiceDue: "2026-08-01",
     maintenanceContractor: "Sentinel Fire & Security",
     status: "faulty",
+    anchor: { x: 80, y: 55 },
   },
   {
     id: "asset_lift-01",
@@ -369,6 +394,7 @@ export const assets: Asset[] = [
     nextServiceDue: "2026-10-14",
     maintenanceContractor: "KONE Service",
     status: "in-service",
+    anchor: { x: 50, y: 75 },
   },
   {
     id: "asset_sk-003",
@@ -384,6 +410,7 @@ export const assets: Asset[] = [
     nextServiceDue: "2026-12-01",
     maintenanceContractor: "Metro Plumbing Services",
     status: "in-service",
+    anchor: { x: 60, y: 40 },
   },
   {
     id: "asset_el-05",
@@ -399,6 +426,7 @@ export const assets: Asset[] = [
     nextServiceDue: "2026-09-01",
     maintenanceContractor: "Sentinel Fire & Security",
     status: "in-service",
+    anchor: { x: 45, y: 50 },
   },
 ];
 
@@ -666,4 +694,293 @@ export function getWorkOrderById(id: string): WorkOrder | undefined {
 
 export function getAssetById(id: string): Asset | undefined {
   return assets.find((a) => a.id === id);
+}
+
+// Section 10 — BMS and IoT integration (read-only).
+
+function synthReadings(base: number, amplitude: number, points = 12): { t: string; v: number }[] {
+  return Array.from({ length: points }, (_, i) => {
+    const hoursAgo = (points - 1 - i) * 2;
+    const wave = Math.sin(i / 2) * amplitude;
+    return {
+      t: new Date(Date.now() - hoursAgo * 60 * 60 * 1000).toISOString(),
+      v: Math.round((base + wave) * 10) / 10,
+    };
+  });
+}
+
+export const telemetryPoints: TelemetryPoint[] = [
+  {
+    id: "tp_ahu07_supply",
+    assetId: "asset_ahu-07",
+    propertyId: "prop_kings-cross-office",
+    label: "Supply air temperature",
+    unit: "°C",
+    source: "BACnet/IP",
+    lastUpdated: "2026-07-19T09:40:00+01:00",
+    freshness: "live",
+    readings: synthReadings(19, 4),
+  },
+  {
+    id: "tp_ahu07_power",
+    assetId: "asset_ahu-07",
+    propertyId: "prop_kings-cross-office",
+    label: "Compressor power draw",
+    unit: "kW",
+    source: "BACnet/IP",
+    lastUpdated: "2026-07-19T09:40:00+01:00",
+    freshness: "live",
+    readings: synthReadings(7.5, 1.8),
+  },
+  {
+    id: "tp_ahu02_supply",
+    assetId: "asset_ahu-02",
+    propertyId: "prop_coal-drops-4",
+    label: "Supply air temperature",
+    unit: "°C",
+    source: "MQTT",
+    lastUpdated: "2026-07-19T09:15:00+01:00",
+    freshness: "delayed",
+    readings: synthReadings(21, 1.5),
+  },
+  {
+    id: "tp_lift01_trips",
+    assetId: "asset_lift-01",
+    propertyId: "prop_kings-cross-office",
+    label: "Daily trip count",
+    unit: "trips",
+    source: "Vendor API",
+    lastUpdated: "2026-07-19T06:00:00+01:00",
+    freshness: "live",
+    readings: synthReadings(210, 40),
+  },
+];
+
+export const alarms: Alarm[] = [
+  {
+    id: "alarm_1",
+    assetId: "asset_ahu-07",
+    propertyId: "prop_kings-cross-office",
+    propertyName: "Office - King's Cross",
+    assetLabel: "AHU AHU-07",
+    message: "Supply air temperature deviation > 6°C from setpoint",
+    severity: "critical",
+    raisedAt: "2026-07-19T07:52:00+01:00",
+    status: "converted",
+    source: "BACnet/IP",
+  },
+  {
+    id: "alarm_2",
+    assetId: "asset_el-22",
+    propertyId: "prop_kings-cross-office",
+    propertyName: "Office - King's Cross",
+    assetLabel: "Emergency Lighting EL-22",
+    message: "Self-test failure reported by panel",
+    severity: "critical",
+    raisedAt: "2026-07-15T14:50:00+01:00",
+    status: "converted",
+    source: "MQTT",
+  },
+  {
+    id: "alarm_3",
+    assetId: "asset_lift-01",
+    propertyId: "prop_kings-cross-office",
+    propertyName: "Office - King's Cross",
+    assetLabel: "Lift LIFT-01",
+    message: "Vibration sensor trending above baseline",
+    severity: "warning",
+    raisedAt: "2026-07-19T08:05:00+01:00",
+    status: "active",
+    source: "Vendor API",
+  },
+  {
+    id: "alarm_4",
+    assetId: "asset_ahu-02",
+    propertyId: "prop_coal-drops-4",
+    propertyName: "Coal Drops Yard - Unit 4",
+    assetLabel: "AHU AHU-02",
+    message: "Filter differential pressure approaching threshold",
+    severity: "info",
+    raisedAt: "2026-07-18T11:00:00+01:00",
+    status: "acknowledged",
+    source: "MQTT",
+  },
+];
+
+export function getTelemetryForAsset(assetId: string): TelemetryPoint[] {
+  return telemetryPoints.filter((t) => t.assetId === assetId);
+}
+
+export function getAlarmsForProperty(propertyId: string): Alarm[] {
+  return alarms.filter((a) => a.propertyId === propertyId);
+}
+
+// Section 5.11 — Notifications and communications.
+
+export const notifications: NotificationItem[] = [
+  {
+    id: "notif_1",
+    type: "work_order.created",
+    title: "New job: SA-1046",
+    body: "Ravi Chandra raised \"Unusual noise / vibration\" at Office - King's Cross.",
+    timestamp: "2026-07-19T08:20:00+01:00",
+    read: false,
+    href: "/jobs/wo_1046",
+  },
+  {
+    id: "notif_2",
+    type: "bms.alarm_received",
+    title: "Critical alarm: AHU AHU-07",
+    body: "Supply air temperature deviation triggered a converted work order SA-1044.",
+    timestamp: "2026-07-19T07:52:00+01:00",
+    read: false,
+    href: "/jobs/wo_1044",
+  },
+  {
+    id: "notif_3",
+    type: "ppm.overdue",
+    title: "PPM overdue: Water hygiene TMV service",
+    body: "Retail Unit - Camden — Sink SK-003 service is now overdue.",
+    timestamp: "2026-07-19T06:00:00+01:00",
+    read: false,
+    href: "/compliance",
+  },
+  {
+    id: "notif_4",
+    type: "work_order.status_changed",
+    title: "SA-1045 awaiting parts",
+    body: "Sentinel Fire & Security moved Emergency Lighting EL-22 to Awaiting parts.",
+    timestamp: "2026-07-16T09:05:00+01:00",
+    read: true,
+    href: "/jobs/wo_1045",
+  },
+  {
+    id: "notif_5",
+    type: "document.expiring",
+    title: "Document review due",
+    body: "Electrical Isolation Schedule - Roof Plant is unverified and due for review.",
+    timestamp: "2026-07-14T09:00:00+01:00",
+    read: true,
+    href: "/documents",
+  },
+  {
+    id: "notif_6",
+    type: "visit.completed",
+    title: "SA-1039 closed",
+    body: "S&A Engineer completed and closed the communal door entry fault.",
+    timestamp: "2026-07-05T13:30:00+01:00",
+    read: true,
+    href: "/jobs/wo_1039",
+  },
+];
+
+export const notificationPreferences: NotificationPreference[] = [
+  { eventType: "work_order.created", label: "New job raised", email: true, sms: false, teams: true },
+  { eventType: "work_order.status_changed", label: "Job status changed", email: true, sms: false, teams: false },
+  { eventType: "visit.completed", label: "Visit completed", email: true, sms: false, teams: false },
+  { eventType: "document.expiring", label: "Document expiring / unverified", email: true, sms: false, teams: false },
+  { eventType: "ppm.overdue", label: "PPM overdue", email: true, sms: true, teams: true },
+  { eventType: "bms.alarm_received", label: "BMS alarm received", email: true, sms: true, teams: true },
+];
+
+// Section 5.9 — Contractor and engineer workspace.
+
+export const contractorCompanies: ContractorCompany[] = [
+  {
+    id: "contractor_metro",
+    name: "Metro Plumbing Services",
+    trades: ["Plumbing", "Water hygiene"],
+    serviceAreas: ["Central London", "East London"],
+    insuranceExpiry: "2027-02-01",
+    competenceDocuments: 6,
+    approved: true,
+    responseRate: 96,
+    firstTimeFixRate: 88,
+  },
+  {
+    id: "contractor_climate",
+    name: "Climate Care Ltd",
+    trades: ["HVAC"],
+    serviceAreas: ["Central London", "South East London"],
+    insuranceExpiry: "2026-11-15",
+    competenceDocuments: 8,
+    approved: true,
+    responseRate: 91,
+    firstTimeFixRate: 79,
+  },
+  {
+    id: "contractor_sentinel",
+    name: "Sentinel Fire & Security",
+    trades: ["Fire", "Electrical", "Life safety"],
+    serviceAreas: ["Greater London"],
+    insuranceExpiry: "2027-05-20",
+    competenceDocuments: 11,
+    approved: true,
+    responseRate: 98,
+    firstTimeFixRate: 92,
+  },
+];
+
+export const quotations: Quotation[] = [
+  {
+    id: "quote_1",
+    workOrderId: "wo_1045",
+    workOrderReference: "SA-1045",
+    contractor: "Sentinel Fire & Security",
+    amount: 245,
+    version: 2,
+    status: "approved",
+    submittedAt: "2026-07-16T10:00:00+01:00",
+    notes: "Replacement emergency battery pack and callout labour.",
+  },
+  {
+    id: "quote_2",
+    workOrderId: "wo_1044",
+    workOrderReference: "SA-1044",
+    contractor: "Climate Care Ltd",
+    amount: 890,
+    version: 1,
+    status: "submitted",
+    submittedAt: "2026-07-19T10:30:00+01:00",
+    notes: "Compressor diagnostics and part replacement, subject to approval.",
+  },
+  {
+    id: "quote_3",
+    workOrderId: "wo_1043",
+    workOrderReference: "SA-1043",
+    contractor: "Climate Care Ltd",
+    amount: 0,
+    version: 1,
+    status: "requested",
+    notes: "Awaiting site diagnosis before quotation can be prepared.",
+  },
+  {
+    id: "quote_4",
+    workOrderId: "wo_1048",
+    workOrderReference: "SA-1048",
+    contractor: "Metro Plumbing Services",
+    amount: 0,
+    version: 1,
+    status: "requested",
+    notes: "Blockage may require drain camera survey — quote pending site visit.",
+  },
+  {
+    id: "quote_5",
+    workOrderId: "wo_1042",
+    workOrderReference: "SA-1042",
+    contractor: "Metro Plumbing Services",
+    amount: 165,
+    version: 1,
+    status: "approved",
+    submittedAt: "2026-07-17T15:00:00+01:00",
+    notes: "Thermostatic mixing valve replacement and callout.",
+  },
+];
+
+export function getQuotationsForContractor(contractorName: string): Quotation[] {
+  return quotations.filter((q) => q.contractor === contractorName);
+}
+
+export function getWorkOrdersForContractor(contractorName: string): WorkOrder[] {
+  return workOrders.filter((w) => w.assignedTo === contractorName);
 }

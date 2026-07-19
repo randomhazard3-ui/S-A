@@ -33,7 +33,11 @@ export default async function RaiseJobPage({
           description="Add assets to the register to enable structured job raising."
         />
       ) : (
-        <RaiseJobForm propertyName={property.name} assets={propertyAssets} />
+        <RaiseJobForm
+          propertyName={property.name}
+          assets={propertyAssets}
+          scan={property.scan}
+        />
       )}
     </div>
   );

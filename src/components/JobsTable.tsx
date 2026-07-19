@@ -7,6 +7,7 @@ import type { WorkOrder, WorkOrderStatus } from "@/lib/types";
 import { WORK_ORDER_STATUSES } from "@/lib/types";
 import { PriorityBadge, WorkOrderStatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
+import { ExportButton } from "@/components/ExportButton";
 import { Wrench } from "lucide-react";
 
 export function JobsTable({ jobs }: { jobs: WorkOrder[] }) {
@@ -54,6 +55,22 @@ export function JobsTable({ jobs }: { jobs: WorkOrder[] }) {
             </option>
           ))}
         </select>
+        <ExportButton
+          filename="jobs.csv"
+          rows={filtered.map((j) => ({
+            reference: j.reference,
+            property: j.propertyName,
+            location: j.locationLabel,
+            asset: j.assetLabel ?? "",
+            fault: j.faultLabel,
+            trade: j.trade,
+            priority: j.priority,
+            status: j.status,
+            raisedBy: j.raisedBy,
+            raisedAt: j.raisedAt,
+            assignedTo: j.assignedTo ?? "",
+          }))}
+        />
       </div>
 
       {filtered.length === 0 ? (

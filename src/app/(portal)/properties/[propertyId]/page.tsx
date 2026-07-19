@@ -5,7 +5,6 @@ import {
   Building2,
   FileText,
   MapPin,
-  Plus,
   ScanEye,
   ShieldAlert,
   Wrench,
@@ -14,6 +13,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Tabs } from "@/components/Tabs";
 import { EmptyState } from "@/components/EmptyState";
+import { RaiseJobButton } from "@/components/RaiseJobButton";
+import { FloorPlanViewer } from "@/components/FloorPlanViewer";
 import {
   ComplianceRiskBadge,
   PPMStatusBadge,
@@ -22,6 +23,7 @@ import {
 } from "@/components/StatusBadge";
 import {
   auditEvents,
+  getAlarmsForProperty,
   getAssetsForProperty,
   getDocumentsForProperty,
   getLocationsForProperty,
@@ -68,15 +70,7 @@ export default async function PropertyProfilePage({
       <PageHeader
         title={property.name}
         description={`${property.addressLine1}, ${property.town} ${property.postcode}`}
-        actions={
-          <Link
-            href={`/properties/${property.id}/raise-job`}
-            className="inline-flex items-center gap-1.5 rounded-md bg-brand-800 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Raise a job
-          </Link>
-        }
+        actions={<RaiseJobButton propertyId={property.id} />}
       />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -345,18 +339,28 @@ export default async function PropertyProfilePage({
             {
               id: "3d",
               label: "3D / Floor Plan",
-              content: (
-                <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border-strong bg-bg px-6 py-16 text-center">
-                  <ScanEye className="h-6 w-6 text-muted" aria-hidden="true" />
-                  <p className="text-sm font-medium text-body">
-                    3D / floor-plan viewer integration point
+              content: propertyAssets.some((a) => a.anchor) ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted">
+                    Draft placeholder — production build embeds the real
+                    scan/floor-plan provider. Hotspot positions come from the
+                    portal-owned asset anchor, not the viewer (section 9,
+                    architectural principle).
                   </p>
-                  <p className="max-w-sm text-xs text-muted">
-                    Embeds a third-party viewer (Matterport, Polycam export or
-                    a custom Three.js scene) with portal-owned asset hotspots
-                    anchored to scan coordinates, per section 9.
-                  </p>
+                  <FloorPlanViewer
+                    assets={propertyAssets}
+                    scan={property.scan}
+                    alarmAssetIds={getAlarmsForProperty(propertyId)
+                      .filter((a) => a.status === "active")
+                      .map((a) => a.assetId)}
+                  />
                 </div>
+              ) : (
+                <EmptyState
+                  icon={ScanEye}
+                  title="No 3D scan or floor plan on file"
+                  description="Assets need scan anchors before a viewer can be embedded here."
+                />
               ),
             },
             {

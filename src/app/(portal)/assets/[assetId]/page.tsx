@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { WorkOrderStatusBadge } from "@/components/StatusBadge";
+import { RaiseJobButton } from "@/components/RaiseJobButton";
+import { BmsAssetPanel } from "@/components/BmsAssetPanel";
 import {
+  alarms,
   assets,
   getAssetById,
   getPropertyById,
+  getTelemetryForAsset,
   getWorkOrdersForProperty,
 } from "@/lib/mock-data";
 
@@ -54,17 +57,7 @@ export default async function AssetDetailPage({
             asset.locationLabel
           )
         }
-        actions={
-          property && (
-            <Link
-              href={`/properties/${property.id}/raise-job`}
-              className="inline-flex items-center gap-1.5 rounded-md bg-brand-800 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Raise a job
-            </Link>
-          )
-        }
+        actions={property && <RaiseJobButton propertyId={property.id} />}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -122,6 +115,17 @@ export default async function AssetDetailPage({
           </p>
         </Card>
       </div>
+
+      {(getTelemetryForAsset(asset.id).length > 0 ||
+        alarms.some((a) => a.assetId === asset.id)) && (
+        <Card title="BMS / live status">
+          <BmsAssetPanel
+            telemetry={getTelemetryForAsset(asset.id)}
+            alarms={alarms.filter((a) => a.assetId === asset.id)}
+            propertyId={asset.propertyId}
+          />
+        </Card>
+      )}
 
       <Card title="Job history">
         {assetJobs.length === 0 ? (

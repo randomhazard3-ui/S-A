@@ -1,14 +1,9 @@
 import Link from "next/link";
-import {
-  Building2,
-  Wrench,
-  AlertTriangle,
-  FileText,
-  ArrowUpRight,
-} from "lucide-react";
+import { Building2, Wrench, AlertTriangle, FileText, ArrowUpRight } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { Card } from "@/components/Card";
+import { DashboardQuickActions } from "@/components/DashboardQuickActions";
 import { ComplianceRiskBadge, WorkOrderStatusBadge } from "@/components/StatusBadge";
 import { properties, workOrders, auditEvents } from "@/lib/mock-data";
 
@@ -27,12 +22,16 @@ export default function DashboardPage() {
         title="Portfolio dashboard"
         description="Status, urgent jobs, SLA risks, compliance due dates and recent activity across your portfolio."
         actions={
-          <Link
-            href="/properties"
-            className="inline-flex items-center gap-1.5 rounded-md bg-brand-800 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
-          >
-            Raise a job
-          </Link>
+          <DashboardQuickActions
+            exportRows={properties.map((p) => ({
+              property: p.name,
+              openJobs: p.openJobs,
+              compliancePercent: p.compliancePercent,
+              complianceRisk: p.complianceRisk,
+              documentsDue: p.documentsDue,
+              lastActivity: p.lastActivity,
+            }))}
+          />
         }
       />
 

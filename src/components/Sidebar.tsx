@@ -11,21 +11,60 @@ import {
   FileText,
   BarChart3,
   Settings,
+  Radio,
+  ClipboardList,
+  Award,
+  ReceiptText,
+  TrendingUp,
 } from "lucide-react";
+import { useViewRole, type ViewRole } from "@/lib/role-context";
 
-export const NAV_ITEMS = [
+const CUSTOMER_NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/properties", label: "Properties", icon: Building2 },
   { href: "/jobs", label: "Jobs", icon: Wrench },
   { href: "/assets", label: "Assets", icon: Boxes },
   { href: "/compliance", label: "Compliance / PPM", icon: ShieldCheck },
   { href: "/documents", label: "Documents", icon: FileText },
+  { href: "/bms", label: "BMS / Telemetry", icon: Radio },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/admin", label: "Administration", icon: Settings },
 ];
 
+const ENGINEER_NAV = CUSTOMER_NAV.filter((item) => item.href !== "/admin");
+
+const AUDITOR_NAV = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/properties", label: "Properties", icon: Building2 },
+  { href: "/compliance", label: "Compliance / PPM", icon: ShieldCheck },
+  { href: "/documents", label: "Documents", icon: FileText },
+  { href: "/reports", label: "Reports", icon: BarChart3 },
+];
+
+const CONTRACTOR_NAV = [
+  { href: "/contractor", label: "Job queue", icon: ClipboardList },
+  { href: "/contractor/company", label: "Company profile", icon: Award },
+  { href: "/contractor/quotations", label: "Quotations", icon: ReceiptText },
+  { href: "/contractor/performance", label: "Performance", icon: TrendingUp },
+];
+
+export function navItemsForRole(role: ViewRole) {
+  switch (role) {
+    case "SA_ENGINEER":
+      return ENGINEER_NAV;
+    case "READ_ONLY_AUDITOR":
+      return AUDITOR_NAV;
+    case "CONTRACTOR_ADMIN":
+      return CONTRACTOR_NAV;
+    default:
+      return CUSTOMER_NAV;
+  }
+}
+
 export function Sidebar() {
   const pathname = usePathname();
+  const { role } = useViewRole();
+  const items = navItemsForRole(role);
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:shrink-0 border-r border-border bg-brand-950 text-white">
@@ -39,7 +78,7 @@ export function Sidebar() {
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;

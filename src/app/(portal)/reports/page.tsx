@@ -1,6 +1,6 @@
-import { Download } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
+import { ExportButton } from "@/components/ExportButton";
 import { ppmTasks, workOrders } from "@/lib/mock-data";
 import { WORK_ORDER_STATUSES } from "@/lib/types";
 
@@ -48,15 +48,20 @@ export default function ReportsPage() {
         title="Reports"
         description="Operational, compliance and contractor performance reporting across the portfolio."
         actions={
-          <button
-            type="button"
-            disabled
-            title="Export requires backend wiring — not available in this draft"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border-strong px-3.5 py-2 text-sm font-medium text-muted opacity-70"
-          >
-            <Download className="h-4 w-4" aria-hidden="true" />
-            Export CSV / PDF
-          </button>
+          <ExportButton
+            filename="jobs-report.csv"
+            label="Export CSV"
+            rows={workOrders.map((w) => ({
+              reference: w.reference,
+              property: w.propertyName,
+              fault: w.faultLabel,
+              trade: w.trade,
+              priority: w.priority,
+              status: w.status,
+              raisedAt: w.raisedAt,
+              slaTargetHours: w.slaTargetHours,
+            }))}
+          />
         }
       />
 
@@ -129,10 +134,11 @@ export default function ReportsPage() {
 
       <Card title="Note on this draft">
         <p className="text-sm text-muted">
-          Figures above are illustrative, computed from the mock dataset. The
-          production build derives these from real work-order and PPM data,
-          with export to CSV/XLSX/PDF subject to role permissions (section
-          5.12), plus portfolio benchmarking once reliable data volume
+          Figures above are illustrative, computed from the mock dataset. CSV
+          export works client-side against this dataset; the production
+          build derives these from real work-order and PPM data, adds
+          XLSX/PDF formats, subjects export to role permissions (section
+          5.12), and adds portfolio benchmarking once reliable data volume
           exists.
         </p>
       </Card>

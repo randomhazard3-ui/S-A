@@ -50,6 +50,7 @@ export interface Property {
   responsibleManager: string;
   region: string;
   heroImage?: string;
+  scan?: ScanInfo;
 }
 
 export interface Location {
@@ -80,6 +81,19 @@ export interface Asset {
   nextServiceDue?: string;
   maintenanceContractor?: string;
   status: "in-service" | "faulty" | "decommissioned";
+  /** Scan/Asset Anchor (section 7, 9.4) — provider-specific 3D/floor-plan
+   * position, stored separately from the asset record itself so the portal
+   * never depends on a single 3D provider. Percentage coordinates on the
+   * property's current floor-plan image. */
+  anchor?: { x: number; y: number };
+}
+
+export interface ScanInfo {
+  provider: "Matterport" | "Polycam" | "Three.js custom scene";
+  capturedAt: string;
+  status: "current" | "superseded" | "processing";
+  coordinateSystem: string;
+  sourceFiles: string;
 }
 
 export interface FaultOption {
@@ -237,4 +251,95 @@ export interface AuditEvent {
   entity: string;
   oldValue?: string;
   newValue?: string;
+}
+
+// Section 10 — BMS and IoT integration. The browser never talks to a BMS
+// directly; this models the read-only data the integration layer publishes.
+
+export type TelemetrySource = "BACnet/IP" | "MQTT" | "Vendor API" | "Niagara";
+
+export interface TelemetryReading {
+  t: string;
+  v: number;
+}
+
+export interface TelemetryPoint {
+  id: string;
+  assetId: string;
+  propertyId: string;
+  label: string;
+  unit: string;
+  source: TelemetrySource;
+  lastUpdated: string;
+  freshness: "live" | "delayed" | "stale";
+  readings: TelemetryReading[];
+}
+
+export type AlarmSeverity = "info" | "warning" | "critical";
+
+export interface Alarm {
+  id: string;
+  assetId: string;
+  propertyId: string;
+  propertyName: string;
+  assetLabel: string;
+  message: string;
+  severity: AlarmSeverity;
+  raisedAt: string;
+  status: "active" | "acknowledged" | "converted" | "resolved";
+  source: TelemetrySource;
+}
+
+// Section 5.11 — Notifications and communications.
+
+export type NotificationChannel = "email" | "sms" | "teams";
+
+export interface NotificationItem {
+  id: string;
+  type:
+    | "work_order.created"
+    | "work_order.status_changed"
+    | "visit.completed"
+    | "document.expiring"
+    | "ppm.overdue"
+    | "bms.alarm_received";
+  title: string;
+  body: string;
+  timestamp: string;
+  read: boolean;
+  href?: string;
+}
+
+export interface NotificationPreference {
+  eventType: NotificationItem["type"];
+  label: string;
+  email: boolean;
+  sms: boolean;
+  teams: boolean;
+}
+
+// Section 5.9 — Contractor and engineer workspace.
+
+export interface ContractorCompany {
+  id: string;
+  name: string;
+  trades: string[];
+  serviceAreas: string[];
+  insuranceExpiry: string;
+  competenceDocuments: number;
+  approved: boolean;
+  responseRate: number;
+  firstTimeFixRate: number;
+}
+
+export interface Quotation {
+  id: string;
+  workOrderId: string;
+  workOrderReference: string;
+  contractor: string;
+  amount: number;
+  version: number;
+  status: "requested" | "submitted" | "approved" | "rejected";
+  submittedAt?: string;
+  notes: string;
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, ArrowRight } from "lucide-react";
+import { MapPin, ArrowRight, Plus } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { ComplianceRiskBadge } from "@/components/StatusBadge";
 import { properties } from "@/lib/mock-data";
@@ -12,6 +12,15 @@ export default function PropertiesPage() {
       <PageHeader
         title="Properties"
         description="Authorised properties and quick access to each digital property profile."
+        actions={
+          <Link
+            href="/properties/new"
+            className="inline-flex items-center gap-1.5 rounded-md bg-brand-800 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Add property
+          </Link>
+        }
       />
 
       <div className="flex flex-wrap gap-2 text-xs">

@@ -1,18 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, Camera, MapPin } from "lucide-react";
-import type { Asset, WorkOrderPriority } from "@/lib/types";
+import { CheckCircle2, Camera } from "lucide-react";
+import type { Asset, ScanInfo, WorkOrderPriority } from "@/lib/types";
 import { ASSET_FAULT_MENU } from "@/lib/types";
+import { FloorPlanViewer } from "@/components/FloorPlanViewer";
 
 const PRIORITIES: WorkOrderPriority[] = ["LOW", "NORMAL", "URGENT", "CRITICAL"];
 
 export function RaiseJobForm({
   propertyName,
   assets,
+  scan,
 }: {
   propertyName: string;
   assets: Asset[];
+  scan?: ScanInfo;
 }) {
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(
     assets[0]?.id ?? null,
@@ -69,34 +72,19 @@ export function RaiseJobForm({
         <p className="mb-3 text-sm font-semibold text-ink">
           Interactive 3D / floor-plan viewer
         </p>
-        <div className="flex flex-col gap-2 rounded-md border border-dashed border-border-strong bg-surface p-4">
-          <p className="text-xs text-muted">
-            Draft placeholder — production build embeds the property&apos;s 3D
-            scan or floor plan with clickable asset hotspots (section 9).
-            Select an asset below to simulate clicking a hotspot.
-          </p>
-          <ul className="mt-2 space-y-1.5">
-            {assets.map((asset) => (
-              <li key={asset.id}>
-                <button
-                  type="button"
-                  onClick={() => selectAsset(asset.id)}
-                  className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors ${
-                    asset.id === selectedAssetId
-                      ? "border-brand-700 bg-brand-50 text-brand-900"
-                      : "border-border text-body hover:border-border-strong"
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden="true" />
-                    {asset.assetType} {asset.tagCode}
-                  </span>
-                  <span className="text-xs text-muted">{asset.locationLabel}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <p className="mb-3 text-xs text-muted">
+          Draft placeholder — production build embeds the property&apos;s real
+          3D scan or floor plan. Click a hotspot (or the list below it) to
+          select the asset — the system auto-attaches property, room, asset
+          ID and linked technical records.
+        </p>
+        <FloorPlanViewer
+          assets={assets}
+          scan={scan}
+          mode="select"
+          selectedAssetId={selectedAssetId ?? undefined}
+          onSelect={selectAsset}
+        />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
